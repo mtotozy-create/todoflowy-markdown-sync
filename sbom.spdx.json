@@ -1,0 +1,72 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "todoflowy-markdown-sync-1.0.0",
+  "documentNamespace": "https://github.com/mtotozy-create/todoflowy-markdown-sync/sbom/1.0.0",
+  "creationInfo": {
+    "created": "2026-08-03T00:00:00Z",
+    "creators": ["Organization: TodoFlowy"]
+  },
+  "packages": [
+    {
+      "name": "todoflowy-markdown-sync",
+      "SPDXID": "SPDXRef-Package-MarkdownSync",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "https://github.com/mtotozy-create/todoflowy-markdown-sync",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "Copyright (c) 2026 TodoFlowy contributors"
+    },
+    {
+      "name": "@todoflowy/plugin-contracts",
+      "SPDXID": "SPDXRef-Package-Contracts",
+      "versionInfo": "0.1.0-rc.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "0e75bf9d469fa5d42a47bd1a46dfa94da47f012910e4284b0c0f1110e05be4af"
+        }
+      ]
+    },
+    {
+      "name": "@todoflowy/plugin-sdk",
+      "SPDXID": "SPDXRef-Package-SDK",
+      "versionInfo": "0.1.0-rc.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "0f522ffd1dff9e2b08fcc61328fc32da70eaa6045fd8c3d352c6a662db2c84a4"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-MarkdownSync"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-MarkdownSync",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-Contracts"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-MarkdownSync",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-SDK"
+    }
+  ]
+}

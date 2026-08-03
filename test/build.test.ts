@@ -13,7 +13,7 @@ describe("Markdown Sync production build", () => {
     expect(manifest).toMatchObject({
       engines: { pluginApi: "^1.0.0", todoflowy: ">=0.3.2 <0.4.0" },
       id: "todoflowy/markdown-sync",
-      manifestVersion: 1,
+      manifestVersion: 2,
       runtime: {
         capabilities: [
           "todos:read",
