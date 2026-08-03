@@ -1,0 +1,45 @@
+{
+  "name": "@todoflowy/plugin-markdown-sync-source",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mtotozy-create/todoflowy-markdown-sync.git"
+  },
+  "type": "module",
+  "packageManager": "pnpm@10.33.0",
+  "engines": { "node": ">=24.0.0" },
+  "pnpm": {
+    "overrides": {
+      "@todoflowy/plugin-contracts": "file:vendor/todoflowy-plugin-contracts-0.1.0-rc.0.tgz",
+      "@todoflowy/plugin-package-validator": "file:vendor/todoflowy-plugin-package-validator-0.1.0-rc.0.tgz",
+      "@todoflowy/plugin-runtime": "file:vendor/todoflowy-plugin-runtime-0.1.0-rc.0.tgz",
+      "@todoflowy/plugin-sdk": "file:vendor/todoflowy-plugin-sdk-0.1.0-rc.0.tgz",
+      "@todoflowy/plugin-toolkit": "file:vendor/todoflowy-plugin-toolkit-0.1.0-rc.0.tgz"
+    }
+  },
+  "scripts": {
+    "prepare:platform": "node scripts/prepare-platform-rc.mjs",
+    "build": "node scripts/build.mjs",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc -p tsconfig.json",
+    "verify": "corepack pnpm build && corepack pnpm typecheck && corepack pnpm test && corepack pnpm test:coverage"
+  },
+  "dependencies": {
+    "@todoflowy/plugin-contracts": "file:vendor/todoflowy-plugin-contracts-0.1.0-rc.0.tgz",
+    "@todoflowy/plugin-sdk": "file:vendor/todoflowy-plugin-sdk-0.1.0-rc.0.tgz"
+  },
+  "devDependencies": {
+    "@todoflowy/plugin-package-validator": "file:vendor/todoflowy-plugin-package-validator-0.1.0-rc.0.tgz",
+    "@todoflowy/plugin-runtime": "file:vendor/todoflowy-plugin-runtime-0.1.0-rc.0.tgz",
+    "@todoflowy/plugin-toolkit": "file:vendor/todoflowy-plugin-toolkit-0.1.0-rc.0.tgz",
+    "@types/node": "24.10.0",
+    "@vitest/coverage-v8": "4.1.10",
+    "jsdom": "26.1.0",
+    "typescript": "5.9.3",
+    "vite": "8.2.0",
+    "vitest": "4.1.10"
+  }
+}

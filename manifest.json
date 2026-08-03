@@ -1,0 +1,53 @@
+{
+  "manifestVersion": 1,
+  "id": "todoflowy/markdown-sync",
+  "name": "Markdown Sync",
+  "version": "1.0.0",
+  "description": "Edit the current personal TodoFlowy week as portable Markdown.",
+  "author": "TodoFlowy Official",
+  "homepage": "https://todoflowy.com",
+  "engines": {
+    "todoflowy": ">=0.3.2 <0.4.0",
+    "pluginApi": "^1.0.0"
+  },
+  "runtime": {
+    "entry": "dist/runtime.js",
+    "capabilities": ["todos:read", "storage:read", "storage:write", "ui:toast"]
+  },
+  "extensions": [
+    {
+      "slot": "task-view",
+      "id": "weekly-markdown",
+      "entry": "dist/task-view.js",
+      "label": "Weekly Markdown",
+      "capabilities": [
+        "todos:read",
+        "todos:write",
+        "storage:read",
+        "storage:write",
+        "ui:confirm",
+        "theme:read",
+        "context:locale"
+      ]
+    },
+    {
+      "slot": "toolbar-action",
+      "id": "sync-now",
+      "command": "markdown.sync-now",
+      "label": "Refresh Markdown",
+      "icon": "refresh-cw"
+    },
+    {
+      "slot": "settings-section",
+      "id": "markdown-settings",
+      "entry": "dist/settings.js",
+      "label": "Markdown timezone",
+      "capabilities": [
+        "storage:read",
+        "storage:write",
+        "theme:read",
+        "context:locale"
+      ]
+    }
+  ]
+}
