@@ -52,7 +52,7 @@ describe("Markdown Sync deterministic package", () => {
     const validated = run(["validate", first, ...compatibility]);
     expect(validated.status).toBe(0);
     expect(validated.stdout).toMatch(
-      /^valid todoflowy\/markdown-sync@1\.1\.0 size=\d+ sha256=[a-f0-9]{64}\n$/,
+      /^valid todoflowy\/markdown-sync@1\.1\.1 size=\d+ sha256=[a-f0-9]{64}\n$/,
     );
 
     const inspected = run(["inspect", first, ...compatibility]);

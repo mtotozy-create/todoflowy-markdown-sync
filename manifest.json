@@ -2,7 +2,7 @@
   "manifestVersion": 2,
   "id": "todoflowy/markdown-sync",
   "name": "Markdown Sync",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Edit the current personal TodoFlowy week as portable Markdown.",
   "author": "TodoFlowy Official",
   "homepage": "https://todoflowy.com",

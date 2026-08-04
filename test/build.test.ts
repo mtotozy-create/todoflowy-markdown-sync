@@ -23,7 +23,7 @@ describe("Markdown Sync production build", () => {
         ],
         entry: "dist/runtime.js",
       },
-      version: "1.1.0",
+      version: "1.1.1",
     });
     const extensions = manifest.extensions as Array<Record<string, unknown>>;
     expect(extensions).toEqual([

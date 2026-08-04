@@ -2,8 +2,8 @@
   "spdxVersion": "SPDX-2.3",
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
-  "name": "todoflowy-markdown-sync-1.1.0",
-  "documentNamespace": "https://github.com/mtotozy-create/todoflowy-markdown-sync/sbom/1.1.0",
+  "name": "todoflowy-markdown-sync-1.1.1",
+  "documentNamespace": "https://github.com/mtotozy-create/todoflowy-markdown-sync/sbom/1.1.1",
   "creationInfo": {
     "created": "2026-08-04T00:00:00Z",
     "creators": ["Organization: TodoFlowy"]
@@ -12,7 +12,7 @@
     {
       "name": "todoflowy-markdown-sync",
       "SPDXID": "SPDXRef-Package-MarkdownSync",
-      "versionInfo": "1.1.0",
+      "versionInfo": "1.1.1",
       "downloadLocation": "https://github.com/mtotozy-create/todoflowy-markdown-sync",
       "filesAnalyzed": false,
       "licenseConcluded": "MIT",
