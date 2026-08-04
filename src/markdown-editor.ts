@@ -85,6 +85,27 @@ function protectsMetadata(transaction: Transaction): boolean {
   return blocked;
 }
 
+function normalizedMetadataSelection(
+  transaction: Transaction,
+): EditorSelection | null {
+  if (transaction.docChanged) return null;
+
+  const ranges = metadataRanges(transaction.startState.doc);
+  const selection = transaction.newSelection;
+  let changed = false;
+  const normalized = selection.ranges.map((range) => {
+    if (!range.empty) return range;
+    const metadata = ranges.find(({ to }) => to === range.head);
+    if (metadata === undefined) return range;
+    changed = true;
+    return EditorSelection.cursor(metadata.from, -1);
+  });
+
+  return changed
+    ? EditorSelection.create(normalized, selection.mainIndex)
+    : null;
+}
+
 function copiedText(state: EditorState): string {
   const selections = state.selection.ranges.filter((range) => !range.empty);
   if (selections.length > 0)
@@ -108,6 +129,18 @@ function hiddenMetadataExtensions(): Extension {
     EditorView.decorations.of(metadataDecorations),
     EditorView.atomicRanges.of(metadataDecorations),
     EditorState.changeFilter.of((transaction) => !protectsMetadata(transaction)),
+    EditorState.transactionFilter.of((transaction) => {
+      const selection = normalizedMetadataSelection(transaction);
+      if (selection === null) return transaction;
+
+      const userEvent = transaction.annotation(Transaction.userEvent);
+      return {
+        selection,
+        filter: false,
+        scrollIntoView: transaction.scrollIntoView,
+        ...(userEvent === undefined ? {} : { userEvent }),
+      };
+    }),
   ];
 }
 

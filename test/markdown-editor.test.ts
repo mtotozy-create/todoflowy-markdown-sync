@@ -1,5 +1,9 @@
 /** @vitest-environment jsdom */
 
+import {
+  cursorLineBoundaryForward,
+  deleteCharBackward,
+} from "@codemirror/commands";
 import { EditorSelection } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { describe, expect, it, vi } from "vitest";
@@ -100,6 +104,34 @@ describe("Markdown editor", () => {
     });
     expect(setup.view.state.sliceDoc()).toBe(afterTitleEdit);
     expect(metadataStart).toBeGreaterThan(0);
+    setup.cleanup();
+  });
+
+  it("keeps the visual line end editable while metadata is hidden", () => {
+    const setup = fixture();
+    setup.view.dispatch({ selection: EditorSelection.cursor(6) });
+
+    expect(cursorLineBoundaryForward(setup.view)).toBe(true);
+    expect(setup.view.state.selection.main.head).toBe(
+      setup.view.state.sliceDoc().indexOf(METADATA),
+    );
+
+    setup.view.dispatch({
+      changes: {
+        from: setup.view.state.selection.main.head,
+        insert: " Updated",
+      },
+      userEvent: "input.type",
+    });
+    expect(setup.view.state.sliceDoc()).toBe(
+      `- [ ] Write report Updated${METADATA}\n`,
+    );
+
+    expect(cursorLineBoundaryForward(setup.view)).toBe(true);
+    expect(deleteCharBackward(setup.view)).toBe(true);
+    expect(setup.view.state.sliceDoc()).toBe(
+      `- [ ] Write report Update${METADATA}\n`,
+    );
     setup.cleanup();
   });
 
