@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 
+import { EditorView } from "@codemirror/view";
 import { describe, expect, it, vi } from "vitest";
 
 import { mountTaskView, type TaskViewDependencies } from "../src/task-view.js";
@@ -87,11 +88,12 @@ async function flush() {
   await Promise.resolve();
 }
 
-function editor(root: HTMLElement): HTMLTextAreaElement {
-  const value = root.querySelector("textarea");
-  if (!(value instanceof HTMLTextAreaElement))
+function editor(root: HTMLElement): EditorView {
+  const value = root.querySelector<HTMLElement>(".cm-editor");
+  const view = value === null ? null : EditorView.findFromDOM(value);
+  if (view === null)
     throw new Error("Missing Markdown editor.");
-  return value;
+  return view;
 }
 
 function button(root: HTMLElement, label: string): HTMLButtonElement {
@@ -103,9 +105,11 @@ function button(root: HTMLElement, label: string): HTMLButtonElement {
   return value;
 }
 
-function edit(value: HTMLTextAreaElement, markdown: string) {
-  value.value = markdown;
-  value.dispatchEvent(new Event("input", { bubbles: true }));
+function edit(view: EditorView, markdown: string) {
+  view.dispatch({
+    changes: { from: 0, insert: markdown, to: view.state.doc.length },
+    userEvent: "input.type",
+  });
 }
 
 describe("Markdown Sync task view", () => {
@@ -115,9 +119,18 @@ describe("Markdown Sync task view", () => {
     const setup = fixture();
     const cleanup = await mountTaskView(root, setup.dependencies);
 
-    const textarea = editor(root);
-    expect(textarea.labels?.[0]?.textContent).toBe("Markdown");
-    expect(textarea.value).toContain("<!-- todoflowy:v1");
+    const markdownEditor = editor(root);
+    expect(markdownEditor.contentDOM.getAttribute("aria-label")).toBe(
+      "Markdown",
+    );
+    expect(markdownEditor.state.sliceDoc()).toContain("<!-- todoflowy:v1");
+    expect(markdownEditor.contentDOM.textContent).not.toContain("todoflowy:v1");
+    const metadataToggle = button(root, "Show sync info");
+    expect(metadataToggle.getAttribute("aria-pressed")).toBe("false");
+    metadataToggle.click();
+    expect(markdownEditor.contentDOM.textContent).toContain("todoflowy:v1");
+    expect(metadataToggle.textContent).toBe("Hide sync info");
+    expect(root.textContent).toContain("clean");
     expect(root.dataset.theme).toBe("light");
     expect(root.getAttribute("lang")).toBe("en-US");
     setup.emit("theme.changed", { theme: "dark" });
@@ -149,20 +162,22 @@ describe("Markdown Sync task view", () => {
       },
     });
     await mountTaskView(root, setup.dependencies);
-    const textarea = editor(root);
-    expect(textarea.value).toBe("- [ ] Keep me");
+    const markdownEditor = editor(root);
+    expect(markdownEditor.state.sliceDoc()).toBe("- [ ] Keep me");
     expect(root.textContent).toContain("stale");
 
     button(root, "Preview").click();
     await vi.waitFor(() => expect(root.textContent).toContain("Preview ready"));
-    edit(textarea, "- [ ] Changed");
+    edit(markdownEditor, "- [ ] Changed");
     await flush();
     expect(root.textContent).not.toContain("Preview ready");
 
     button(root, "Select all").click();
-    expect(document.activeElement).toBe(textarea);
-    expect(textarea.selectionStart).toBe(0);
-    expect(textarea.selectionEnd).toBe(textarea.value.length);
+    expect(document.activeElement).toBe(markdownEditor.contentDOM);
+    expect(markdownEditor.state.selection.main.from).toBe(0);
+    expect(markdownEditor.state.selection.main.to).toBe(
+      markdownEditor.state.doc.length,
+    );
   });
 
   it("requires confirmation before discarding a dirty draft", async () => {
@@ -181,7 +196,7 @@ describe("Markdown Sync task view", () => {
       .mockResolvedValueOnce(false)
       .mockResolvedValueOnce(true);
     await mountTaskView(root, setup.dependencies);
-    const textarea = editor(root);
+    const markdownEditor = editor(root);
 
     button(root, "Refresh").click();
     await vi.waitFor(() =>
@@ -190,17 +205,19 @@ describe("Markdown Sync task view", () => {
     await vi.waitFor(() =>
       expect(button(root, "Refresh").disabled).toBe(false),
     );
-    expect(textarea.value).toBe("- [ ] Keep");
+    expect(markdownEditor.state.sliceDoc()).toBe("- [ ] Keep");
     button(root, "Refresh").click();
-    await vi.waitFor(() => expect(textarea.value).toContain("Write report"));
+    await vi.waitFor(() =>
+      expect(markdownEditor.state.sliceDoc()).toContain("Write report"),
+    );
   });
 
   it("previews, confirms, applies, and stores authoritative clean Markdown", async () => {
     const root = document.createElement("div");
     const setup = fixture({ snapshot: [] });
     await mountTaskView(root, setup.dependencies);
-    const textarea = editor(root);
-    edit(textarea, "- [ ] New");
+    const markdownEditor = editor(root);
+    edit(markdownEditor, "- [ ] New");
     await flush();
     button(root, "Preview").click();
     await vi.waitFor(() => expect(root.textContent).toContain("Preview ready"));
@@ -209,7 +226,7 @@ describe("Markdown Sync task view", () => {
       expect(setup.dependencies.todos.create).toHaveBeenCalled(),
     );
     await vi.waitFor(() =>
-      expect(textarea.value).toContain(
+      expect(markdownEditor.state.sliceDoc()).toContain(
         "id=00000000-0000-4000-8000-000000000009",
       ),
     );
@@ -225,20 +242,48 @@ describe("Markdown Sync task view", () => {
     expect(root.textContent).toContain("created: 1");
   });
 
+  it("round-trips complete Markdown edits from Obsidian by Todo identity", async () => {
+    const root = document.createElement("div");
+    const setup = fixture();
+    await mountTaskView(root, setup.dependencies);
+    const markdownEditor = editor(root);
+    button(root, "Show sync info").click();
+
+    edit(
+      markdownEditor,
+      markdownEditor.state
+        .sliceDoc()
+        .replace("Write report", "Edited in Obsidian"),
+    );
+    button(root, "Preview").click();
+    await vi.waitFor(() => expect(root.textContent).toContain("Preview ready"));
+    button(root, "Apply").click();
+
+    await vi.waitFor(() =>
+      expect(setup.dependencies.todos.update).toHaveBeenCalledWith(
+        "00000000-0000-4000-8000-000000000001",
+        { revision: 7, title: "Edited in Obsidian" },
+      ),
+    );
+    expect(setup.dependencies.todos.create).not.toHaveBeenCalled();
+  });
+
   it("refreshes clean drafts on Todo events and stales dirty drafts", async () => {
     const root = document.createElement("div");
     const setup = fixture();
     await mountTaskView(root, setup.dependencies);
-    const textarea = editor(root);
+    const markdownEditor = editor(root);
     setup.setSnapshot([createWeeklyTodo({ title: "External" })]);
     setup.emit("todos.changed");
-    await vi.waitFor(() => expect(textarea.value).toContain("External"));
+    await vi.waitFor(() =>
+      expect(markdownEditor.state.sliceDoc()).toContain("External"),
+    );
 
-    edit(textarea, "- [ ] Local");
+    edit(markdownEditor, "- [ ] Local");
     await flush();
     setup.emit("todos.changed");
     await vi.waitFor(() => expect(root.textContent).toContain("stale"));
-    expect(textarea.value).toBe("- [ ] Local");
+    expect(markdownEditor.state.sliceDoc()).toBe("- [ ] Local");
     expect(root.textContent).toContain("stale");
   });
 
@@ -265,8 +310,8 @@ describe("Markdown Sync task view", () => {
     const root = document.createElement("div");
     const setup = fixture();
     await mountTaskView(root, setup.dependencies);
-    const textarea = editor(root);
-    edit(textarea, "- [x] Write report");
+    const markdownEditor = editor(root);
+    edit(markdownEditor, "- [x] Write report");
     button(root, "Preview").click();
     await vi.waitFor(() => expect(root.textContent).toContain("Preview ready"));
     setup.setSnapshot([createWeeklyTodo({ revision: 8 })]);
@@ -274,7 +319,7 @@ describe("Markdown Sync task view", () => {
     button(root, "Apply").click();
     await vi.waitFor(() => expect(root.textContent).toContain("stale"));
     expect(setup.dependencies.todos.complete).not.toHaveBeenCalled();
-    expect(textarea.value).toBe("- [x] Write report");
+    expect(markdownEditor.state.sliceDoc()).toBe("- [x] Write report");
   });
 
   it("blocks document-invalid apply and ignores malformed host events", async () => {
@@ -311,7 +356,7 @@ describe("Markdown Sync task view", () => {
     const root = document.createElement("div");
     const setup = fixture({ snapshot: [] });
     await mountTaskView(root, setup.dependencies);
-    const textarea = editor(root);
+    const markdownEditor = editor(root);
     const firstWrite = deferred<void>();
     let activeWrites = 0;
     let maximumActiveWrites = 0;
@@ -330,9 +375,9 @@ describe("Markdown Sync task view", () => {
       },
     );
 
-    edit(textarea, "- [ ] A");
-    edit(textarea, "- [ ] Account");
-    edit(textarea, "- [ ] Account draft");
+    edit(markdownEditor, "- [ ] A");
+    edit(markdownEditor, "- [ ] Account");
+    edit(markdownEditor, "- [ ] Account draft");
     await flush();
     expect(setup.dependencies.storage.set).toHaveBeenCalledTimes(1);
 

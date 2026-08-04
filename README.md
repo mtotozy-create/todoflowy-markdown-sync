@@ -14,6 +14,12 @@ Canonical lines use a checkbox plus a trailing text metadata comment:
 
 The metadata preserves exact Todo identity, revision, and preview status. A metadata-free line may match only one exact current-week title; duplicates are ambiguous. Omitting a Todo from Markdown never deletes it. The editor accepts at most 500 checkbox lines and 192 KiB of UTF-8 text.
 
+## Hidden Metadata And Obsidian
+
+The task editor hides valid TodoFlowy metadata by default while keeping the complete Markdown in the draft and synchronization pipeline. Use **Show sync info** to inspect the raw comments. Copying while metadata is hidden produces clean Markdown; copying while it is shown preserves the comments.
+
+For an exact Obsidian round trip, show the sync information before copying, keep each trailing comment when editing in Obsidian, and paste the complete Markdown back before Preview and Apply. Obsidian does not render HTML comments as task text in Reading view, though they may be visible in source-oriented editing modes. Removing the comments falls back to unique-title matching, so renamed or duplicate-title tasks can no longer be matched reliably.
+
 ## Lifecycle And Writes
 
 - The task view reads pages of 25 Todos, preserves a dirty draft byte for byte, previews a deterministic plan, asks for host confirmation, and is the only entry with `todos:write`.

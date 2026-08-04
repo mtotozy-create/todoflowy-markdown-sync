@@ -3,8 +3,10 @@ import { describe, expect, it } from "vitest";
 import {
   MAX_CHECKBOX_LINES,
   MAX_MARKDOWN_BYTES,
+  findCanonicalMetadataOffset,
   generateCanonicalMarkdown,
   parseMarkdown,
+  stripCanonicalMetadata,
 } from "../src/core/markdown.js";
 import { createTodo } from "./helpers.js";
 
@@ -74,6 +76,18 @@ describe("Markdown contract", () => {
         },
       ],
     });
+  });
+
+  it("finds and strips only valid line-end metadata without changing line endings", () => {
+    const valid =
+      "- [ ] Task <!-- todoflowy:v1 id=00000000-0000-4000-8000-000000000001 rev=7 status=todo -->";
+    const invalid =
+      "- [ ] Broken <!-- todoflowy:v2 id=00000000-0000-4000-8000-000000000002 rev=1 status=todo -->";
+    expect(findCanonicalMetadataOffset(valid)).toBe("- [ ] Task".length);
+    expect(findCanonicalMetadataOffset(invalid)).toBeNull();
+    expect(stripCanonicalMetadata(`${valid}\r\n${invalid}\r\n`)).toBe(
+      `- [ ] Task\r\n${invalid}\r\n`,
+    );
   });
 
   it.each([

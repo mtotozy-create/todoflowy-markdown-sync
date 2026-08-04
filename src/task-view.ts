@@ -12,6 +12,10 @@ import type { WeeklyTodoSnapshot } from "./core/types.js";
 import { getWeekIdentity, resolveDefaultTimeZone } from "./core/week.js";
 import { button, element } from "./dom.js";
 import {
+  createMarkdownEditor,
+  type MarkdownEditorController,
+} from "./markdown-editor.js";
+import {
   loadDraft,
   loadSettings,
   saveDraft,
@@ -92,19 +96,24 @@ export async function mountTaskView(
   const heading = element("h2", { text: "Markdown Sync" });
   const meta = element("p", { className: "markdown-sync__meta" });
   const label = element("label", { text: "Markdown" });
-  const textarea = element("textarea", { className: "markdown-sync__editor" });
-  textarea.id = "markdown-sync-editor";
-  label.htmlFor = textarea.id;
+  const editorHost = element("div", { className: "markdown-sync__editor" });
   const controls = element("div", { className: "markdown-sync__controls" });
   const refreshButton = button("Refresh");
   const selectButton = button("Select all");
+  const metadataButton = button("Show sync info");
   const previewButton = button("Preview");
   const applyButton = button("Apply");
-  controls.append(refreshButton, selectButton, previewButton, applyButton);
+  controls.append(
+    refreshButton,
+    selectButton,
+    metadataButton,
+    previewButton,
+    applyButton,
+  );
   const status = element("p", { className: "markdown-sync__status" });
   status.setAttribute("aria-live", "polite");
   const details = element("pre", { className: "markdown-sync__details" });
-  container.append(heading, meta, label, textarea, controls, status, details);
+  container.append(heading, meta, label, editorHost, controls, status, details);
   root.replaceChildren(style, container);
   root.dataset.theme = theme;
   root.setAttribute("lang", locale);
@@ -113,6 +122,7 @@ export async function mountTaskView(
   let summary: readonly StableLineResult[] = [];
   let pendingDraft: DraftRecord | null = null;
   let draftPersistence: Promise<void> | null = null;
+  let metadataVisible = false;
   let week = getWeekIdentity(dependencies.now(), settings.timezone);
   let currentSourceFingerprint = await computeSourceFingerprint(
     initialSnapshot,
@@ -120,6 +130,31 @@ export async function mountTaskView(
     week.id,
   );
   if (!active) return () => {};
+
+  const canonical = generateCanonicalMarkdown(initialSnapshot);
+  let initialMarkdown: string;
+  let persistInitialDraft = false;
+  if (storedDraft === null || !storedDraft.dirty) {
+    initialMarkdown = canonical;
+    dirty = false;
+    stale = false;
+    persistInitialDraft = true;
+  } else {
+    initialMarkdown = storedDraft.markdown;
+    dirty = true;
+    stale =
+      storedDraft.stale ||
+      storedDraft.sourceFingerprint !== currentSourceFingerprint;
+    persistInitialDraft = stale !== storedDraft.stale;
+  }
+
+  let onEditorChange = () => {};
+  const editor: MarkdownEditorController = createMarkdownEditor({
+    initialValue: initialMarkdown,
+    label: "Markdown",
+    onChange: () => onEditorChange(),
+    parent: editorHost,
+  });
 
   const render = () => {
     if (!active) return;
@@ -132,6 +167,10 @@ export async function mountTaskView(
     applyButton.disabled = busy || preview === null || !preview.documentValid;
     refreshButton.disabled = busy;
     previewButton.disabled = busy;
+    metadataButton.textContent = metadataVisible
+      ? "Hide sync info"
+      : "Show sync info";
+    metadataButton.setAttribute("aria-pressed", String(metadataVisible));
     const previewLines =
       preview === null
         ? []
@@ -149,7 +188,7 @@ export async function mountTaskView(
 
   const captureDraft = (): DraftRecord => ({
     dirty,
-    markdown: textarea.value,
+    markdown: editor.getValue(),
     sourceFingerprint: currentSourceFingerprint,
     stale,
     updatedAt: dependencies.now().toISOString(),
@@ -200,7 +239,7 @@ export async function mountTaskView(
       week.id,
     );
     if (!active) return;
-    textarea.value = generateCanonicalMarkdown(snapshot);
+    editor.setValue(generateCanonicalMarkdown(snapshot));
     dirty = false;
     stale = false;
     preview = null;
@@ -209,20 +248,7 @@ export async function mountTaskView(
     render();
   };
 
-  const canonical = generateCanonicalMarkdown(initialSnapshot);
-  if (storedDraft === null || !storedDraft.dirty) {
-    textarea.value = canonical;
-    dirty = false;
-    stale = false;
-    await persistDraft();
-  } else {
-    textarea.value = storedDraft.markdown;
-    dirty = true;
-    stale =
-      storedDraft.stale ||
-      storedDraft.sourceFingerprint !== currentSourceFingerprint;
-    if (stale !== storedDraft.stale) await persistDraft();
-  }
+  if (persistInitialDraft) await persistDraft();
   render();
 
   const run = async (operation: () => Promise<void>) => {
@@ -244,7 +270,7 @@ export async function mountTaskView(
     }
   };
 
-  const onInput = () => {
+  onEditorChange = () => {
     if (!active) return;
     dirty = true;
     preview = null;
@@ -252,13 +278,18 @@ export async function mountTaskView(
     void persistDraft().catch(reportDraftError);
     render();
   };
-  textarea.addEventListener("input", onInput);
 
   const onSelect = () => {
-    textarea.focus();
-    textarea.select();
+    editor.selectAll();
   };
   selectButton.addEventListener("click", onSelect);
+
+  const onToggleMetadata = () => {
+    metadataVisible = !metadataVisible;
+    editor.setMetadataVisible(metadataVisible);
+    render();
+  };
+  metadataButton.addEventListener("click", onToggleMetadata);
 
   const refresh = async (confirmDirty: boolean) => {
     if (dirty && confirmDirty) {
@@ -276,13 +307,14 @@ export async function mountTaskView(
 
   const onPreview = () =>
     void run(async () => {
-      const document = parseMarkdown(textarea.value);
+      const markdown = editor.getValue();
+      const document = parseMarkdown(markdown);
       const snapshot = await dependencies.todos.readWeek(settings.timezone);
       if (!active) return;
       week = getWeekIdentity(dependencies.now(), settings.timezone);
       const plan = buildApplyPlan(document, snapshot);
       const fingerprint = await computePreviewFingerprint({
-        markdown: textarea.value,
+        markdown,
         plan,
         settings,
         snapshot,
@@ -319,7 +351,7 @@ export async function mountTaskView(
         fingerprint: approvedPreview.fingerprint,
         gateway: dependencies.todos,
         isActive: () => active,
-        markdown: textarea.value,
+        markdown: editor.getValue(),
         plan: approvedPreview.plan,
         settings,
         snapshot: approvedPreview.snapshot,
@@ -348,7 +380,7 @@ export async function mountTaskView(
         week.id,
       );
       if (!active) return;
-      textarea.value = result.canonicalMarkdown;
+      editor.setValue(result.canonicalMarkdown);
       dirty = false;
       stale = false;
       await persistDraft();
@@ -393,8 +425,9 @@ export async function mountTaskView(
     if (!active) return;
     active = false;
     pendingDraft = null;
-    textarea.removeEventListener("input", onInput);
+    editor.destroy();
     selectButton.removeEventListener("click", onSelect);
+    metadataButton.removeEventListener("click", onToggleMetadata);
     refreshButton.removeEventListener("click", onRefresh);
     previewButton.removeEventListener("click", onPreview);
     applyButton.removeEventListener("click", onApply);

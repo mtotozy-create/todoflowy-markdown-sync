@@ -2,17 +2,17 @@
   "spdxVersion": "SPDX-2.3",
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
-  "name": "todoflowy-markdown-sync-1.0.1",
-  "documentNamespace": "https://github.com/mtotozy-create/todoflowy-markdown-sync/sbom/1.0.1",
+  "name": "todoflowy-markdown-sync-1.1.0",
+  "documentNamespace": "https://github.com/mtotozy-create/todoflowy-markdown-sync/sbom/1.1.0",
   "creationInfo": {
-    "created": "2026-08-03T00:00:00Z",
+    "created": "2026-08-04T00:00:00Z",
     "creators": ["Organization: TodoFlowy"]
   },
   "packages": [
     {
       "name": "todoflowy-markdown-sync",
       "SPDXID": "SPDXRef-Package-MarkdownSync",
-      "versionInfo": "1.0.1",
+      "versionInfo": "1.1.0",
       "downloadLocation": "https://github.com/mtotozy-create/todoflowy-markdown-sync",
       "filesAnalyzed": false,
       "licenseConcluded": "MIT",
@@ -50,6 +50,36 @@
           "checksumValue": "0f522ffd1dff9e2b08fcc61328fc32da70eaa6045fd8c3d352c6a662db2c84a4"
         }
       ]
+    },
+    {
+      "name": "@codemirror/commands",
+      "SPDXID": "SPDXRef-Package-CodeMirrorCommands",
+      "versionInfo": "6.10.4",
+      "downloadLocation": "https://code.haverbeke.berlin/codemirror/commands",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "name": "@codemirror/state",
+      "SPDXID": "SPDXRef-Package-CodeMirrorState",
+      "versionInfo": "6.7.1",
+      "downloadLocation": "https://code.haverbeke.berlin/codemirror/state",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "name": "@codemirror/view",
+      "SPDXID": "SPDXRef-Package-CodeMirrorView",
+      "versionInfo": "6.43.7",
+      "downloadLocation": "https://code.haverbeke.berlin/codemirror/view",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION"
     }
   ],
   "relationships": [
@@ -67,6 +97,21 @@
       "spdxElementId": "SPDXRef-Package-MarkdownSync",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-SDK"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-MarkdownSync",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-CodeMirrorCommands"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-MarkdownSync",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-CodeMirrorState"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-MarkdownSync",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-CodeMirrorView"
     }
   ]
 }

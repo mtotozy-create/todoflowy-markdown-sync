@@ -1,6 +1,6 @@
 {
   "name": "@todoflowy/plugin-markdown-sync-source",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "private": true,
   "license": "MIT",
   "repository": {
@@ -28,6 +28,9 @@
     "verify": "corepack pnpm build && corepack pnpm typecheck && corepack pnpm test && corepack pnpm test:coverage"
   },
   "dependencies": {
+    "@codemirror/commands": "^6.10.4",
+    "@codemirror/state": "^6.7.1",
+    "@codemirror/view": "^6.43.7",
     "@todoflowy/plugin-contracts": "file:vendor/todoflowy-plugin-contracts-0.1.0-rc.0.tgz",
     "@todoflowy/plugin-sdk": "file:vendor/todoflowy-plugin-sdk-0.1.0-rc.0.tgz"
   },

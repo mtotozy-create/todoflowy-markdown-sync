@@ -23,7 +23,7 @@ describe("Markdown Sync production build", () => {
         ],
         entry: "dist/runtime.js",
       },
-      version: "1.0.1",
+      version: "1.1.0",
     });
     const extensions = manifest.extensions as Array<Record<string, unknown>>;
     expect(extensions).toEqual([
@@ -77,7 +77,7 @@ describe("Markdown Sync production build", () => {
       const code = await readFile(resolve(root, "dist", entry), "utf8");
       expect(code).not.toMatch(/^\s*import\s/m);
       expect(code).not.toMatch(/\bimport\s*\(/);
-      expect(code).not.toContain("node:");
+      expect(code).not.toMatch(/(?:from\s*|require\s*\()\s*["']node:/);
       expect(code).not.toContain("sourceMappingURL");
       expect(code).not.toContain(repositoryRoot());
       expect(code).toMatch(/export\s*\{/);

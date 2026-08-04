@@ -97,6 +97,22 @@ function parseMetadata(value: string): {
   };
 }
 
+export function findCanonicalMetadataOffset(line: string): number | null {
+  const match = METADATA_PATTERN.exec(line);
+  return match?.index ?? null;
+}
+
+export function stripCanonicalMetadata(markdown: string): string {
+  return markdown
+    .split(/(\r\n|\n|\r)/)
+    .map((part, index) => {
+      if (index % 2 !== 0) return part;
+      const offset = findCanonicalMetadataOffset(part);
+      return offset === null ? part : part.slice(0, offset);
+    })
+    .join("");
+}
+
 export function parseMarkdown(markdown: string): ParsedMarkdownDocument {
   if (new TextEncoder().encode(markdown).byteLength > MAX_MARKDOWN_BYTES)
     return { code: "document_too_large", kind: "invalid" };
